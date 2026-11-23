@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulador de Desarrollo Web · HTML, CSS y JavaScript</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0F4; --surface:#FFFFFF; --surface-2:#E3E8EF; --ink:#14213D; --muted:#55627A; --line:#C9D1DC;
+  --html:#D9481F; --css:#1468A8; --js:#B89A00; --js-bg:#F7DF1E;
+  --ok:#1E7A46; --bad:#B3261E; --code-bg:#1B2540; --code-ink:#E8ECF4;
+  --font:"Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --mono:"JetBrains Mono", "Cascadia Code", Consolas, "Courier New", monospace;
+  --base:17px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F1830; --surface:#17223F; --surface-2:#1F2C4E; --ink:#E9EDF5; --muted:#A3AEC4; --line:#2E3C60;
+    --html:#FF7A50; --css:#5AB0F0; --js:#F7DF1E; --ok:#4CC488; --bad:#FF8A80; --code-bg:#0A1124;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1830; --surface:#17223F; --surface-2:#1F2C4E; --ink:#E9EDF5; --muted:#A3AEC4; --line:#2E3C60;
+  --html:#FF7A50; --css:#5AB0F0; --js:#F7DF1E; --ok:#4CC488; --bad:#FF8A80; --code-bg:#0A1124;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--base);line-height:1.55}
+body.proyector{--base:21px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+img{max-width:100%}
+a{color:var(--css)}
+:focus-visible{outline:3px solid var(--css);outline-offset:2px}
+code,pre,textarea{font-family:var(--mono)}
+
+/* Barra superior */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:10px 20px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand .tri{display:inline-flex;gap:3px}
+.brand .tri i{width:10px;height:22px;border-radius:2px;display:block}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;flex:1}
+nav.tabs a{text-decoration:none;color:var(--muted);padding:7px 12px;border-radius:8px;font-weight:600;white-space:nowrap;font-size:.92rem}
+nav.tabs a:hover{background:var(--surface-2);color:var(--ink)}
+nav.tabs a[aria-current="page"]{background:var(--ink);color:var(--surface)}
+.tools{display:flex;gap:6px}
+.btn{font:inherit;font-weight:600;font-size:.9rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 14px;border-radius:8px;cursor:pointer}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.primary:hover{opacity:.9}
+.btn.small{padding:4px 10px;font-size:.82rem}
+
+main{max-width:1200px;margin:0 auto;padding:28px 20px 60px}
+section.view{display:none}
+section.view.active{display:block}
+h1,h2,h3{line-height:1.15;margin:0 0 .5em}
+h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.2rem;font-weight:700}
+p{max-width:70ch}
+.lead{font-size:1.15em;color:var(--muted);max-width:62ch}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.tag{display:inline-block;font-family:var(--mono);font-size:.78rem;padding:2px 8px;border-radius:6px;font-weight:600}
+.t-html{background:color-mix(in srgb,var(--html) 16%,transparent);color:var(--html)}
+.t-css{background:color-mix(in srgb,var(--css) 16%,transparent);color:var(--css)}
+.t-js{background:color-mix(in srgb,var(--js) 22%,transparent);color:var(--ink)}
+pre.code{background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:10px;overflow-x:auto;font-size:.86rem;line-height:1.5;margin:10px 0}
+.scroll{overflow-x:auto}
+
+/* Hero: tres capas */
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:36px;align-items:center;margin-bottom:44px}
+@media (max-width:860px){.hero{grid-template-columns:1fr}}
+.layers{display:flex;gap:6px;margin:18px 0 10px;flex-wrap:wrap}
+.layer-btn{font:inherit;font-weight:700;border:2px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 16px;border-radius:10px;cursor:pointer;text-align:left}
+.layer-btn small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+.layer-btn[aria-pressed="true"].l1{border-color:var(--html);box-shadow:inset 0 -4px 0 var(--html)}
+.layer-btn[aria-pressed="true"].l2{border-color:var(--css);box-shadow:inset 0 -4px 0 var(--css)}
+.layer-btn[aria-pressed="true"].l3{border-color:var(--js);box-shadow:inset 0 -4px 0 var(--js)}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.stage-bar{display:flex;gap:6px;align-items:center;padding:10px 14px;background:var(--surface-2);font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.stage-bar i{width:10px;height:10px;border-radius:50%;background:var(--line);display:block}
+.stage iframe{width:100%;height:330px;border:0;background:#fff;display:block}
+
+.stat{border-left:4px solid var(--css);padding:4px 0 4px 16px}
+.stat b{display:block;font-size:1.9rem;font-weight:800;line-height:1.1}
+.stat span{color:var(--muted);font-size:.92rem}
+.stat:nth-child(1){border-color:var(--html)} .stat:nth-child(3){border-color:var(--js)} .stat:nth-child(4){border-color:var(--ok)}
+.uses li{margin-bottom:6px}
+.src{font-size:.8rem;color:var(--muted);margin-top:14px}
+
+/* Explorador de etiquetas */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.chip{font-family:var(--mono);font-size:.85rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 10px;border-radius:8px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--html);border-color:var(--html);color:#fff}
+.chip.c-css[aria-pressed="true"]{background:var(--css);border-color:var(--css)}
+.chip.c-js[aria-pressed="true"]{background:var(--js-bg);border-color:var(--js-bg);color:#14213D}
+.render{background:#fff;color:#111;border-radius:10px;border:1px solid var(--line);padding:16px;min-height:90px}
+.anatomy{font-family:var(--mono);font-size:clamp(.85rem,2.2vw,1.15rem);background:var(--code-bg);color:var(--code-ink);padding:20px;border-radius:12px;overflow-x:auto;white-space:nowrap}
+.anatomy span{padding:2px 4px;border-radius:4px;cursor:help}
+.a-open{background:rgba(255,122,80,.3)} .a-attr{background:rgba(90,176,240,.3)} .a-text{background:rgba(247,223,30,.25)} .a-close{background:rgba(255,122,80,.3)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.88rem;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* Modelo de caja */
+.ctrl{display:grid;grid-template-columns:120px 1fr 48px;align-items:center;gap:10px;margin:8px 0;font-size:.92rem}
+.ctrl input[type=range]{width:100%}
+.ctrl select,.ctrl input[type=color]{font:inherit;padding:4px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.boxstage{background:repeating-conic-gradient(var(--surface-2) 0 25%,var(--surface) 0 50%) 0 0/16px 16px;border-radius:10px;border:1px solid var(--line);padding:20px;display:flex;justify-content:center;align-items:center;min-height:260px;overflow:auto}
+.marginwrap{background:rgba(247,223,30,.35);display:inline-block}
+#boxDemo{background:#1468A8;color:#fff;font-weight:700;text-align:center;min-width:120px}
+.flexstage{background:var(--surface-2);border-radius:10px;min-height:220px;padding:10px;display:flex;gap:10px;border:1px dashed var(--line)}
+.flexstage div{background:var(--css);color:#fff;font-weight:800;border-radius:8px;padding:14px 18px;font-size:1.1rem}
+.flexstage div:nth-child(2){padding:26px 18px} .flexstage div:nth-child(3){padding:8px 30px}
+
+/* JS demos */
+.snips{display:flex;flex-direction:column;gap:6px}
+.snip{font:inherit;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 12px;border-radius:10px;cursor:pointer}
+.snip[aria-pressed="true"]{border-color:var(--js);box-shadow:inset 4px 0 0 var(--js)}
+.snip small{display:block;color:var(--muted)}
+.console{background:var(--code-bg);color:#C9F2D6;font-family:var(--mono);font-size:.86rem;padding:12px 14px;border-radius:10px;min-height:90px;max-height:220px;overflow:auto;white-space:pre-wrap}
+.console .err{color:#FF9D94} .console .warn{color:#FFD479} .console .muted{color:#7F8BA8}
+
+/* Laboratorio */
+.lab-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.lab-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lab-actions select{font:inherit;font-size:.9rem;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.switch{display:flex;align-items:center;gap:6px;font-size:.9rem;color:var(--muted)}
+.lab{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:900px){.lab{grid-template-columns:1fr}}
+.editors{display:flex;flex-direction:column;gap:10px}
+.ed{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--code-bg)}
+.ed label{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;font-family:var(--mono);font-size:.8rem;font-weight:600;color:#fff}
+.ed.h label{background:var(--html)} .ed.c label{background:var(--css)} .ed.j label{background:#C9AE00;color:#14213D}
+.ed textarea{width:100%;border:0;resize:vertical;background:var(--code-bg);color:var(--code-ink);padding:10px 12px;font-size:.86rem;line-height:1.5;min-height:140px;tab-size:2;display:block}
+.ed textarea:focus{outline:none;box-shadow:inset 0 0 0 2px var(--css)}
+.preview{display:flex;flex-direction:column;gap:10px}
+.preview .stage iframe{height:420px}
+
+/* Retos */
+.reto-layout{display:grid;grid-template-columns:260px 1fr;gap:18px}
+@media (max-width:900px){.reto-layout{grid-template-columns:1fr}}
+.reto-list{display:flex;flex-direction:column;gap:6px}
+.reto-item{font:inherit;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 12px;border-radius:10px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.reto-item[aria-current="true"]{border-color:var(--ink);box-shadow:inset 4px 0 0 var(--ink)}
+.reto-item .n{font-weight:800;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);font-size:.85rem;flex:none}
+.reto-item.done .n{background:var(--ok);color:#fff}
+.progress{height:10px;background:var(--surface-2);border-radius:6px;overflow:hidden;margin:6px 0 14px}
+.progress div{height:100%;background:var(--ok);width:0;transition:width .4s}
+.feedback{padding:12px 14px;border-radius:10px;margin-top:10px;font-weight:600;display:none}
+.feedback.ok{display:block;background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok);border:1px solid var(--ok)}
+.feedback.bad{display:block;background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad);border:1px solid var(--bad)}
+.hint{display:none;margin-top:10px;padding:10px 14px;border-radius:10px;background:var(--surface-2);font-size:.95rem}
+
+/* Quiz */
+.q{margin-bottom:18px}
+.q fieldset{border:1px solid var(--line);border-radius:12px;padding:14px 18px;background:var(--surface)}
+.q legend{font-weight:700;padding:0 6px}
+.q label{display:block;padding:7px 10px;border-radius:8px;cursor:pointer}
+.q label:hover{background:var(--surface-2)}
+.q label.right{background:color-mix(in srgb,var(--ok) 18%,transparent)}
+.q label.wrong{background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.q .why{display:none;font-size:.9rem;color:var(--muted);margin:8px 10px 0}
+.score{font-size:1.4rem;font-weight:800}
+
+footer{border-top:1px solid var(--line);padding:18px 20px;text-align:center;color:var(--muted);font-size:.85rem}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><span class="tri" aria-hidden="true"><i style="background:var(--html)"></i><i style="background:var(--css)"></i><i style="background:var(--js-bg)"></i></span>Simulador Web</div>
+    <nav class="tabs" aria-label="Secciones">
+      <a href="#inicio">Por qué importa</a>
+      <a href="#html">HTML</a>
+      <a href="#css">CSS</a>
+      <a href="#javascript">JavaScript</a>
+      <a href="#laboratorio">Laboratorio</a>
+      <a href="#retos">Retos</a>
+      <a href="#quiz">Quiz</a>
+    </nav>
+    <div class="tools">
+      <button class="btn small" id="btnProyector" aria-pressed="false" title="Aumenta el tamaño del texto para proyectar en clase">Modo proyector</button>
+      <button class="btn small" id="btnTema" title="Cambiar tema claro/oscuro">Tema</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ============ INICIO ============ -->
+<section class="view" id="v-inicio">
+  <div class="hero">
+    <div>
+      <h1>Una página web se construye en tres capas</h1>
+      <p class="lead">HTML le da estructura, CSS le da estilo y JavaScript le da comportamiento. Activa cada capa y observa cómo la misma tarjeta pasa de texto plano a una pieza interactiva.</p>
+      <div class="layers" role="group" aria-label="Capas de la página">
+        <button class="layer-btn l1" aria-pressed="true" data-layer="1">HTML<small>Estructura</small></button>
+        <button class="layer-btn l2" aria-pressed="false" data-layer="2">+ CSS<small>Estilo</small></button>
+        <button class="layer-btn l3" aria-pressed="false" data-layer="3">+ JavaScript<small>Comportamiento</small></button>
+      </div>
+      <p id="layerNote" style="color:var(--muted);font-size:.95rem">Solo HTML: el navegador muestra el contenido con su estilo por defecto. Ya es una página, pero sin diseño ni interacción.</p>
+    </div>
+    <div class="stage">
+      <div class="stage-bar"><i></i><i></i><i></i><span style="margin-left:8px">mi-primera-pagina.html</span></div>
+      <iframe id="heroFrame" title="Vista previa de las tres capas" sandbox="allow-scripts"></iframe>
+    </div>
+  </div>
+
+  <h2>¿Por qué aprender desarrollo web hoy?</h2>
+  <div class="grid g3" style="margin:18px 0 28px">
+    <div class="stat"><b>+5.500 M</b><span>personas usan internet en el mundo (UIT, 2024)</span></div>
+    <div class="stat"><b>+1.000 M</b><span>sitios web registrados en la red (Netcraft)</span></div>
+    <div class="stat"><b>≈ 98 %</b><span>de los sitios web usan JavaScript en el navegador (W3Techs)</span></div>
+    <div class="stat"><b>10+ años</b><span>JavaScript como el lenguaje más usado por desarrolladores (Stack Overflow Developer Survey)</span></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="panel">
+      <h3>Dónde está la web, aunque no se note</h3>
+      <ul class="uses">
+        <li>Banca en línea, pagos y comercio electrónico.</li>
+        <li>Plataformas educativas y LMS como Moodle, donde viven los cursos virtuales.</li>
+        <li>Apps de escritorio construidas con tecnologías web (VS Code, Teams, Slack).</li>
+        <li>Trámites de gobierno digital, citas médicas y portales de servicios.</li>
+        <li>Interfaces de herramientas de inteligencia artificial, que se usan desde el navegador.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Lo que abre a quien lo domina</h3>
+      <ul class="uses">
+        <li><b>Frontend:</b> diseña y programa lo que el usuario ve y toca.</li>
+        <li><b>Backend y full stack:</b> conecta la interfaz con datos y servidores.</li>
+        <li><b>Diseño UX/UI y accesibilidad:</b> productos que cualquier persona puede usar.</li>
+        <li><b>Emprendimiento:</b> publicar una idea en internet cuesta muy poco con estas tres tecnologías.</li>
+        <li><b>Trabajo remoto:</b> es una de las áreas con más ofertas para equipos distribuidos.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="src">Cifras aproximadas de fuentes públicas; se recomienda actualizarlas antes de cada sesión.</p>
+</section>
+
+<!-- ============ HTML ============ -->
+<section class="view" id="v-html">
+  <span class="tag t-html">HTML · HyperText Markup Language</span>
+  <h2 style="margin-top:10px">HTML: la estructura del contenido</h2>
+  <p class="lead">HTML no es un lenguaje de programación: es un lenguaje de marcado. Usa etiquetas para decirle al navegador qué es cada cosa: un título, un párrafo, una imagen, un enlace.</p>
+
+  <div class="panel" style="margin:22px 0">
+    <h3>Anatomía de un elemento</h3>
+    <p style="color:var(--muted)">Pasa el cursor sobre cada parte.</p>
+    <div class="anatomy"><span class="a-open" title="Etiqueta de apertura">&lt;a</span> <span class="a-attr" title="Atributo: información extra del elemento">href="https://sena.edu.co"</span><span class="a-open">&gt;</span><span class="a-text" title="Contenido visible">Visita el SENA</span><span class="a-close" title="Etiqueta de cierre">&lt;/a&gt;</span></div>
+    <div class="legend"><span><i style="background:rgba(255,122,80,.6)"></i>Etiquetas de apertura y cierre</span><span><i style="background:rgba(90,176,240,.6)"></i>Atributo</span><span><i style="background:rgba(247,223,30,.6)"></i>Contenido</span></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="panel">
+      <h3>Explorador de etiquetas</h3>
+      <p style="color:var(--muted);font-size:.95rem">Elige una etiqueta para ver el código y cómo la muestra el navegador.</p>
+      <div class="chips" id="tagChips"></div>
+      <p id="tagDesc" style="font-size:.95rem"></p>
+      <pre class="code" id="tagCode"></pre>
+      <div class="render" id="tagRender"></div>
+    </div>
+    <div class="panel">
+      <h3>Estructura base de todo documento</h3>
+      <pre class="code">&lt;!DOCTYPE html&gt;
+&lt;html lang="es"&gt;
+  &lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;Mi página&lt;/title&gt;
+    &lt;link rel="stylesheet" href="estilos.css"&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;header&gt;...&lt;/header&gt;
+    &lt;main&gt;...&lt;/main&gt;
+    &lt;footer&gt;...&lt;/footer&gt;
+    &lt;script src="app.js"&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</pre>
+      <ul style="font-size:.95rem">
+        <li><code>&lt;head&gt;</code>: información para el navegador (título, codificación, estilos). No se ve en pantalla.</li>
+        <li><code>&lt;body&gt;</code>: todo lo que el usuario ve.</li>
+        <li><code>header</code>, <code>main</code>, <code>footer</code>: etiquetas semánticas que dan significado y mejoran la accesibilidad y el posicionamiento en buscadores.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CSS ============ -->
+<section class="view" id="v-css">
+  <span class="tag t-css">CSS · Cascading Style Sheets</span>
+  <h2 style="margin-top:10px">CSS: el estilo y la disposición</h2>
+  <p class="lead">CSS selecciona elementos del HTML y les aplica reglas visuales: colores, tamaños, tipografía, espacios y la forma en que se ordenan en la pantalla.</p>
+
+  <div class="panel" style="margin:22px 0">
+    <h3>Sintaxis de una regla</h3>
+    <div class="anatomy"><span class="a-open" title="Selector: a qué elementos aplica">.tarjeta</span> { <span class="a-attr" title="Propiedad">background-color</span>: <span class="a-text" title="Valor">#1468A8</span>; <span class="a-attr">padding</span>: <span class="a-text">20px</span>; }</div>
+    <div class="legend"><span><i style="background:rgba(255,122,80,.6)"></i>Selector</span><span><i style="background:rgba(90,176,240,.6)"></i>Propiedad</span><span><i style="background:rgba(247,223,30,.6)"></i>Valor</span></div>
+    <p style="font-size:.95rem;margin-top:12px">Selectores básicos: <code>p</code> (por etiqueta), <code>.clase</code> (por clase), <code>#id</code> (por identificador único).</p>
+  </div>
+
+  <div class="grid g2">
+    <div class="panel">
+      <h3>Modelo de caja</h3>
+      <p style="color:var(--muted);font-size:.95rem">Todo elemento es una caja: contenido, relleno (padding), borde (border) y margen (margin). El margen se ve en amarillo.</p>
+      <div class="ctrl"><label for="bPad">padding</label><input type="range" id="bPad" min="0" max="60" value="20"><output id="oPad">20</output></div>
+      <div class="ctrl"><label for="bBor">border</label><input type="range" id="bBor" min="0" max="20" value="4"><output id="oBor">4</output></div>
+      <div class="ctrl"><label for="bMar">margin</label><input type="range" id="bMar" min="0" max="60" value="20"><output id="oMar">20</output></div>
+      <div class="ctrl"><label for="bRad">border-radius</label><input type="range" id="bRad" min="0" max="60" value="8"><output id="oRad">8</output></div>
+      <div class="ctrl"><label for="bCol">color de fondo</label><input type="color" id="bCol" value="#1468a8"><span></span></div>
+      <div class="boxstage"><div class="marginwrap" id="marginWrap"><div id="boxDemo">Contenido</div></div></div>
+      <pre class="code" id="boxCode"></pre>
+    </div>
+    <div class="panel">
+      <h3>Flexbox: ordenar elementos</h3>
+      <p style="color:var(--muted);font-size:.95rem">Flexbox distribuye elementos en fila o columna. Cambia las propiedades y observa el resultado.</p>
+      <div class="ctrl"><label for="fDir">flex-direction</label><select id="fDir"><option>row</option><option>column</option><option>row-reverse</option></select><span></span></div>
+      <div class="ctrl"><label for="fJus">justify-content</label><select id="fJus"><option>flex-start</option><option>center</option><option>flex-end</option><option>space-between</option><option>space-around</option></select><span></span></div>
+      <div class="ctrl"><label for="fAli">align-items</label><select id="fAli"><option>stretch</option><option>flex-start</option><option>center</option><option>flex-end</option></select><span></span></div>
+      <div class="flexstage" id="flexDemo"><div>1</div><div>2</div><div>3</div></div>
+      <pre class="code" id="flexCode"></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JS ============ -->
+<section class="view" id="v-javascript">
+  <span class="tag t-js">JavaScript</span>
+  <h2 style="margin-top:10px">JavaScript: el comportamiento</h2>
+  <p class="lead">JavaScript sí es un lenguaje de programación. Guarda datos, toma decisiones, repite tareas y, sobre todo, modifica la página cuando el usuario hace algo.</p>
+
+  <div class="grid g2" style="margin-top:22px">
+    <div class="panel">
+      <h3>Conceptos en acción</h3>
+      <p style="color:var(--muted);font-size:.95rem">Elige un concepto, revisa el código y ejecútalo. El resultado aparece en la consola.</p>
+      <div class="snips" id="snips"></div>
+    </div>
+    <div class="panel">
+      <h3 id="snipTitle">Código</h3>
+      <textarea id="snipCode" spellcheck="false" aria-label="Código JavaScript editable" style="width:100%;min-height:200px;background:var(--code-bg);color:var(--code-ink);border:0;border-radius:10px;padding:12px;font-size:.86rem;line-height:1.5"></textarea>
+      <div style="display:flex;gap:8px;margin:10px 0">
+        <button class="btn primary" id="snipRun">Ejecutar código</button>
+        <button class="btn" id="snipClear">Limpiar consola</button>
+      </div>
+      <div class="console" id="snipConsole" aria-live="polite"><span class="muted">La salida de console.log() aparece aquí.</span></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <h3>El DOM: cómo JavaScript habla con HTML</h3>
+    <p>El navegador convierte el HTML en un árbol de objetos llamado DOM (Document Object Model). JavaScript puede buscar un elemento, escuchar un evento y cambiar su contenido o estilo.</p>
+    <pre class="code">const boton = document.querySelector("#miBoton");   // 1. Buscar el elemento
+boton.addEventListener("click", () =&gt; {              // 2. Escuchar el evento
+  document.querySelector("#saludo").textContent = "¡Hola!"; // 3. Modificar la página
+});</pre>
+    <p style="color:var(--muted);font-size:.95rem">Prueba este patrón en el Laboratorio con la plantilla «Interacción con botón».</p>
+  </div>
+</section>
+
+<!-- ============ LABORATORIO ============ -->
+<section class="view" id="v-laboratorio">
+  <div class="lab-head">
+    <div>
+      <h2>Laboratorio de código</h2>
+      <p style="color:var(--muted);margin:0">Escribe HTML, CSS y JavaScript y ejecútalo al instante.</p>
+    </div>
+    <div class="lab-actions">
+      <select id="tplSel" aria-label="Plantillas"></select>
+      <label class="switch"><input type="checkbox" id="autoRun" checked> Ejecución automática</label>
+      <button class="btn primary" id="labRun">Ejecutar</button>
+      <button class="btn" id="labDownload">Descargar .html</button>
+    </div>
+  </div>
+  <div class="lab">
+    <div class="editors">
+      <div class="ed h"><label for="edH">HTML <span>index.html</span></label><textarea id="edH" spellcheck="false"></textarea></div>
+      <div class="ed c"><label for="edC">CSS <span>estilos.css</span></label><textarea id="edC" spellcheck="false"></textarea></div>
+      <div class="ed j"><label for="edJ">JavaScript <span>app.js</span></label><textarea id="edJ" spellcheck="false"></textarea></div>
+    </div>
+    <div class="preview">
+      <div class="stage">
+        <div class="stage-bar"><i></i><i></i><i></i><span style="margin-left:8px">Vista previa</span></div>
+        <iframe id="labFrame" title="Vista previa del laboratorio" sandbox="allow-scripts allow-modals"></iframe>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><b>Consola</b><button class="btn small" id="labClear">Limpiar</button></div>
+      <div class="console" id="labConsole" aria-live="polite"><span class="muted">Sin mensajes.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RETOS ============ -->
+<section class="view" id="v-retos">
+  <h2>Retos prácticos</h2>
+  <p class="lead">Cada reto se valida automáticamente. Escribe tu solución, ejecútala y pulsa «Verificar».</p>
+  <div class="progress" aria-label="Progreso de retos"><div id="progBar"></div></div>
+  <p id="progTxt" style="margin-top:-6px;color:var(--muted);font-size:.9rem"></p>
+  <div class="reto-layout">
+    <div class="reto-list" id="retoList"></div>
+    <div>
+      <div class="panel" style="margin-bottom:14px">
+        <span class="tag" id="retoTag"></span>
+        <h3 id="retoTitle" style="margin-top:8px"></h3>
+        <p id="retoDesc" style="margin:0"></p>
+      </div>
+      <div class="lab">
+        <div class="editors">
+          <div class="ed h"><label for="rH">HTML</label><textarea id="rH" spellcheck="false"></textarea></div>
+          <div class="ed c"><label for="rC">CSS</label><textarea id="rC" spellcheck="false" style="min-height:100px"></textarea></div>
+          <div class="ed j"><label for="rJ">JavaScript</label><textarea id="rJ" spellcheck="false" style="min-height:100px"></textarea></div>
+        </div>
+        <div class="preview">
+          <div class="stage"><div class="stage-bar"><i></i><i></i><i></i><span style="margin-left:8px">Resultado</span></div>
+            <iframe id="retoFrame" title="Resultado del reto" sandbox="allow-scripts allow-same-origin"></iframe></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" id="retoRun">Ejecutar</button>
+            <button class="btn primary" id="retoCheck">Verificar</button>
+            <button class="btn" id="retoHint">Ver pista</button>
+            <button class="btn" id="retoSol">Mostrar solución</button>
+            <button class="btn" id="retoReset">Reiniciar</button>
+          </div>
+          <div class="feedback" id="retoFb" role="status"></div>
+          <div class="hint" id="retoHintBox"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section class="view" id="v-quiz">
+  <h2>Quiz de cierre</h2>
+  <p class="lead">Ocho preguntas para comprobar los conceptos de la sesión.</p>
+  <div id="quizBox" style="margin-top:20px"></div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <button class="btn primary" id="quizCheck">Calificar respuestas</button>
+    <button class="btn" id="quizReset">Reiniciar quiz</button>
+    <span class="score" id="quizScore"></span>
+  </div>
+</section>
+</main>
+
+<footer>Simulador de Desarrollo Web · HTML, CSS y JavaScript · Material de apoyo para clase</footer>
+
+<script>
+const CLOSE = '<' + '/script>';
+const CAPTURE = '<script>(function(){var s=function(t,a){try{parent.postMessage({__lab:1,t:t,m:Array.prototype.map.call(a,function(x){try{return (typeof x==="object"&&x!==null)?JSON.stringify(x):String(x)}catch(e){return String(x)}}).join(" ")},"*")}catch(e){}};["log","info","warn","error"].forEach(function(k){var o=console[k];console[k]=function(){s(k,arguments);o.apply(console,arguments)}});window.onerror=function(m,src,l){s("error",["Error: "+m+(l?" (línea "+l+")":"")]);};})();' + CLOSE;
+function buildDoc(h, c, j){
+  return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>body{font-family:system-ui,sans-serif;margin:16px;color:#111;background:#fff}' + c + '</style>' + CAPTURE + '</head><body>' + h + '<script>' + j + '\n' + CLOSE + '</body></html>';
+}
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* ---------- Navegación por hash ---------- */
+const VIEWS = ['inicio','html','css','javascript','laboratorio','retos','quiz'];
+function route(){
+  const h = location.hash.replace('#','');
+  const v = VIEWS.includes(h) ? h : 'inicio';
+  document.querySelectorAll('section.view').forEach(s => s.classList.toggle('active', s.id === 'v-' + v));
+  document.querySelectorAll('nav.tabs a').forEach(a => { if (a.getAttribute('href') === '#' + v) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  window.scrollTo(0,0);
+  if (v === 'laboratorio' && !labStarted){ labStarted = true; runLab(); }
+  if (v === 'retos' && !retoStarted){ retoStarted = true; loadReto(0); }
+}
+window.addEventListener('hashchange', route);
+
+/* ---------- Herramientas ---------- */
+document.getElementById('btnProyector').onclick = e => {
+  const on = document.body.classList.toggle('proyector');
+  e.currentTarget.setAttribute('aria-pressed', on);
+};
+document.getElementById('btnTema').onclick = () => {
+  const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme = dark ? 'light' : 'dark';
+};
+function enableTab(ta){
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Tab' && !e.shiftKey){
+      e.preventDefault();
+      const s = ta.selectionStart, en = ta.selectionEnd;
+      ta.value = ta.value.slice(0,s) + '  ' + ta.value.slice(en);
+      ta.selectionStart = ta.selectionEnd = s + 2;
+      ta.dispatchEvent(new Event('input'));
+    }
+  });
+}
+
+/* ---------- Consolas (mensajes desde iframes) ---------- */
+const consoles = new Map();
+window.addEventListener('message', e => {
+  if (!e.data || !e.data.__lab) return;
+  for (const [frame, out] of consoles){
+    if (frame.contentWindow === e.source) logTo(out, e.data.m, e.data.t);
+  }
+});
+function logTo(out, msg, type){
+  if (out.querySelector('.muted')) out.innerHTML = '';
+  const line = document.createElement('div');
+  if (type === 'error') line.className = 'err';
+  if (type === 'warn') line.className = 'warn';
+  line.textContent = '› ' + msg;
+  out.appendChild(line);
+  out.scrollTop = out.scrollHeight;
+}
+
+/* ---------- Hero: tres capas ---------- */
+const heroHTML = '<div class="card">\n  <h2>Taller de Desarrollo Web</h2>\n  <p>Aprende a crear tu primera página.</p>\n  <button id="btn">Inscribirme</button>\n  <p id="msg"></p>\n</div>';
+const heroCSS = 'body{display:grid;place-items:center;min-height:90vh;background:#EAF2FB;margin:0}.card{background:#fff;padding:32px;border-radius:18px;max-width:320px;text-align:center;box-shadow:0 12px 30px rgba(20,33,61,.15);border-top:8px solid #1468A8}h2{color:#14213D;margin:0 0 8px}p{color:#55627A}button{background:#D9481F;color:#fff;border:0;padding:12px 24px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer}button:hover{background:#B83A16}#msg{font-weight:700;color:#1E7A46;min-height:1.4em}';
+const heroJS = 'var n=0;document.getElementById("btn").addEventListener("click",function(){n++;document.getElementById("msg").textContent="¡Inscripción registrada! Clics: "+n;this.textContent="Inscrito ✓";});';
+const layerNotes = {
+  1:'Solo HTML: el navegador muestra el contenido con su estilo por defecto. Ya es una página, pero sin diseño ni interacción.',
+  2:'HTML + CSS: el mismo contenido ahora tiene colores, espacios, bordes y una composición. El botón aún no hace nada.',
+  3:'HTML + CSS + JavaScript: haz clic en el botón. La página responde y cambia su contenido sin recargarse.'
+};
+function setLayer(n){
+  document.querySelectorAll('.layer-btn').forEach(b => b.setAttribute('aria-pressed', +b.dataset.layer <= n));
+  document.getElementById('layerNote').textContent = layerNotes[n];
+  document.getElementById('heroFrame').srcdoc = buildDoc(heroHTML, n >= 2 ? heroCSS : '', n >= 3 ? heroJS : '');
+}
+document.querySelectorAll('.layer-btn').forEach(b => b.onclick = () => setLayer(+b.dataset.layer));
+setLayer(1);
+
+/* ---------- Explorador de etiquetas ---------- */
+const TAGS = [
+  ['h1 a h6','Títulos de seis niveles; h1 es el más importante.','<h1>Título principal</h1>\n<h2>Subtítulo</h2>\n<h3>Sección</h3>'],
+  ['p','Párrafo de texto.','<p>Este es un párrafo. Puede tener <strong>negrita</strong> y <em>cursiva</em>.</p>'],
+  ['a','Enlace a otra página o sección. El atributo href indica el destino.','<a href="https://developer.mozilla.org/es/" target="_blank">Documentación MDN</a>'],
+  ['img','Imagen. El atributo alt describe la imagen para personas con lectores de pantalla.','<img src="https://placehold.co/240x120?text=Imagen" alt="Imagen de ejemplo">'],
+  ['ul / ol','Listas: ul sin orden (viñetas) y ol ordenada (números).','<ul>\n  <li>HTML</li>\n  <li>CSS</li>\n  <li>JavaScript</li>\n</ul>\n<ol>\n  <li>Planear</li>\n  <li>Construir</li>\n</ol>'],
+  ['button','Botón que el usuario puede pulsar; JavaScript le da la acción.','<button>Enviar</button>'],
+  ['input','Campo para que el usuario escriba o elija datos.','<label>Nombre: <input type="text" placeholder="Tu nombre"></label><br><br>\n<label><input type="checkbox"> Acepto</label>'],
+  ['table','Tabla de datos con filas (tr), encabezados (th) y celdas (td).','<table border="1" cellpadding="6">\n  <tr><th>Lenguaje</th><th>Rol</th></tr>\n  <tr><td>HTML</td><td>Estructura</td></tr>\n  <tr><td>CSS</td><td>Estilo</td></tr>\n</table>'],
+  ['div / span','Contenedores genéricos: div es de bloque, span va dentro del texto.','<div style="background:#eee;padding:8px">Soy un div con <span style="color:#D9481F">un span</span> dentro.</div>']
+];
+const chipBox = document.getElementById('tagChips');
+TAGS.forEach((t,i) => {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.textContent = '<' + t[0] + '>';
+  b.onclick = () => showTag(i);
+  chipBox.appendChild(b);
+});
+function showTag(i){
+  [...chipBox.children].forEach((c,k) => c.setAttribute('aria-pressed', k === i));
+  document.getElementById('tagDesc').textContent = TAGS[i][1];
+  document.getElementById('tagCode').innerHTML = esc(TAGS[i][2]);
+  document.getElementById('tagRender').innerHTML = TAGS[i][2];
+}
+showTag(0);
+
+/* ---------- Modelo de caja ---------- */
+function updBox(){
+  const p = bPad.value, b = bBor.value, m = bMar.value, r = bRad.value, c = bCol.value;
+  oPad.value = p; oBor.value = b; oMar.value = m; oRad.value = r;
+  const box = document.getElementById('boxDemo');
+  box.style.padding = p + 'px'; box.style.border = b + 'px solid #D9481F'; box.style.borderRadius = r + 'px'; box.style.background = c;
+  document.getElementById('marginWrap').style.padding = m + 'px';
+  document.getElementById('boxCode').textContent = '.caja {\n  padding: ' + p + 'px;\n  border: ' + b + 'px solid #D9481F;\n  margin: ' + m + 'px;\n  border-radius: ' + r + 'px;\n  background-color: ' + c + ';\n}';
+}
+['bPad','bBor','bMar','bRad','bCol'].forEach(id => document.getElementById(id).addEventListener('input', updBox));
+updBox();
+
+function updFlex(){
+  const f = document.getElementById('flexDemo');
+  f.style.flexDirection = fDir.value; f.style.justifyContent = fJus.value; f.style.alignItems = fAli.value;
+  document.getElementById('flexCode').textContent = '.contenedor {\n  display: flex;\n  flex-direction: ' + fDir.value + ';\n  justify-content: ' + fJus.value + ';\n  align-items: ' + fAli.value + ';\n}';
+}
+['fDir','fJus','fAli'].forEach(id => document.getElementById(id).addEventListener('change', updFlex));
+updFlex();
+
+/* ---------- Conceptos JS ---------- */
+const SNIPS = [
+  ['Variables y tipos de datos','let, const y los tipos más usados',
+`const nombre = "Laura";      // texto (string)
+let edad = 24;               // número (number)
+const activo = true;         // booleano (boolean)
+const cursos = ["HTML", "CSS", "JS"]; // arreglo (array)
+
+console.log("Nombre:", nombre);
+console.log("Edad:", edad, "→ tipo:", typeof edad);
+edad = edad + 1;
+console.log("El próximo año tendrá", edad);
+console.log("Cursos:", cursos.length);`],
+  ['Condicionales','Tomar decisiones con if / else',
+`const nota = 3.8;
+
+if (nota >= 4.5) {
+  console.log("Excelente desempeño");
+} else if (nota >= 3.0) {
+  console.log("Aprobado");
+} else {
+  console.log("Debe reforzar");
+}`],
+  ['Ciclos','Repetir tareas con for',
+`for (let i = 1; i <= 5; i++) {
+  console.log("Repetición número", i);
+}
+
+const lenguajes = ["HTML", "CSS", "JavaScript"];
+lenguajes.forEach(l => console.log("Aprendiendo " + l));`],
+  ['Funciones','Bloques reutilizables que reciben datos y devuelven un resultado',
+`function calcularPromedio(notas) {
+  let suma = 0;
+  for (const n of notas) suma += n;
+  return suma / notas.length;
+}
+
+const promedio = calcularPromedio([4.0, 3.5, 4.8]);
+console.log("Promedio:", promedio.toFixed(2));`],
+  ['Objetos','Agrupar datos relacionados',
+`const aprendiz = {
+  nombre: "Andrés",
+  ficha: 3607782,
+  aprobado: true
+};
+
+console.log(aprendiz.nombre);
+console.log("¿Aprobó?", aprendiz.aprobado ? "Sí" : "No");
+aprendiz.ciudad = "Bogotá";
+console.log(aprendiz);`],
+  ['Errores comunes','Qué pasa cuando algo falla',
+`console.log("Antes del error");
+console.log(variableQueNoExiste); // ReferenceError
+console.log("Esta línea no se ejecuta");`]
+];
+const snipBox = document.getElementById('snips');
+let snipIdx = 0;
+SNIPS.forEach((s,i) => {
+  const b = document.createElement('button');
+  b.className = 'snip'; b.innerHTML = '<b>' + s[0] + '</b><small>' + s[1] + '</small>';
+  b.onclick = () => selectSnip(i);
+  snipBox.appendChild(b);
+});
+const snipFrame = document.createElement('iframe');
+snipFrame.setAttribute('sandbox','allow-scripts'); snipFrame.style.display = 'none'; snipFrame.title = 'Ejecutor oculto';
+document.body.appendChild(snipFrame);
+consoles.set(snipFrame, document.getElementById('snipConsole'));
+function selectSnip(i){
+  snipIdx = i;
+  [...snipBox.children].forEach((c,k) => c.setAttribute('aria-pressed', k === i));
+  document.getElementById('snipTitle').textContent = SNIPS[i][0];
+  document.getElementById('snipCode').value = SNIPS[i][2];
+}
+document.getElementById('snipRun').onclick = () => {
+  const out = document.getElementById('snipConsole');
+  out.innerHTML = '';
+  snipFrame.srcdoc = buildDoc('', '', document.getElementById('snipCode').value);
+};
+document.getElementById('snipClear').onclick = () => document.getElementById('snipConsole').innerHTML = '<span class="muted">Consola limpia.</span>';
+enableTab(document.getElementById('snipCode'));
+selectSnip(0);
+
+/* ---------- Laboratorio ---------- */
+const TPL = {
+  'Tarjeta de presentación': [
+`<div class="tarjeta">
+  <h1>Ana Gómez</h1>
+  <p>Desarrolladora web en formación</p>
+  <button id="contacto">Contactar</button>
+</div>`,
+`body { background: #EAF2FB; display: grid; place-items: center; min-height: 90vh; }
+.tarjeta {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+}
+h1 { color: #1468A8; margin: 0; }
+button { background: #D9481F; color: white; border: 0; padding: 10px 20px; border-radius: 8px; cursor: pointer; }`,
+`document.getElementById("contacto").addEventListener("click", () => {
+  alert("Escríbeme a ana@correo.com");
+  console.log("Botón de contacto pulsado");
+});`],
+  'Interacción con botón': [
+`<h2>Contador de asistencia</h2>
+<p>Asistentes: <span id="total">0</span></p>
+<button id="sumar">+ 1</button>
+<button id="reiniciar">Reiniciar</button>`,
+`body { font-family: sans-serif; text-align: center; padding-top: 40px; }
+#total { font-size: 48px; font-weight: bold; color: #1468A8; display: block; }
+button { font-size: 18px; padding: 10px 18px; margin: 4px; cursor: pointer; }`,
+`let total = 0;
+const span = document.getElementById("total");
+
+document.getElementById("sumar").onclick = () => {
+  total++;
+  span.textContent = total;
+  console.log("Total:", total);
+};
+document.getElementById("reiniciar").onclick = () => {
+  total = 0;
+  span.textContent = total;
+};`],
+  'Lista de tareas': [
+`<h2>Mis tareas</h2>
+<input id="tarea" placeholder="Nueva tarea">
+<button id="agregar">Agregar</button>
+<ul id="lista"></ul>`,
+`body { font-family: sans-serif; max-width: 400px; margin: 30px auto; }
+input { padding: 8px; width: 65%; }
+button { padding: 8px 12px; }
+li { padding: 8px; border-bottom: 1px solid #ddd; cursor: pointer; }
+li.hecha { text-decoration: line-through; color: #999; }`,
+`const lista = document.getElementById("lista");
+document.getElementById("agregar").onclick = () => {
+  const input = document.getElementById("tarea");
+  if (input.value.trim() === "") return console.warn("Escribe una tarea");
+  const li = document.createElement("li");
+  li.textContent = input.value;
+  li.onclick = () => li.classList.toggle("hecha");
+  lista.appendChild(li);
+  input.value = "";
+};`],
+  'Diseño con Flexbox': [
+`<header>Mi sitio</header>
+<div class="fila">
+  <div class="col">Inicio</div>
+  <div class="col">Cursos</div>
+  <div class="col">Contacto</div>
+</div>`,
+`header { background: #14213D; color: white; padding: 16px; font-size: 22px; }
+.fila { display: flex; gap: 12px; margin-top: 12px; }
+.col { flex: 1; background: #1468A8; color: white; padding: 30px; text-align: center; border-radius: 8px; }`,
+`console.log("Prueba cambiar flex-direction a column en el CSS");`],
+  'Página en blanco': ['', '', '']
+};
+const tplSel = document.getElementById('tplSel');
+Object.keys(TPL).forEach(k => { const o = document.createElement('option'); o.textContent = k; tplSel.appendChild(o); });
+const edH = document.getElementById('edH'), edC = document.getElementById('edC'), edJ = document.getElementById('edJ');
+const labFrame = document.getElementById('labFrame'), labConsole = document.getElementById('labConsole');
+consoles.set(labFrame, labConsole);
+let labStarted = false, labTimer;
+function loadTpl(k){ [edH.value, edC.value, edJ.value] = TPL[k]; runLab(); }
+function runLab(){
+  labConsole.innerHTML = '<span class="muted">Sin mensajes.</span>';
+  labFrame.srcdoc = buildDoc(edH.value, edC.value, edJ.value);
+}
+tplSel.onchange = () => loadTpl(tplSel.value);
+document.getElementById('labRun').onclick = runLab;
+document.getElementById('labClear').onclick = () => labConsole.innerHTML = '<span class="muted">Consola limpia.</span>';
+[edH, edC, edJ].forEach(t => {
+  enableTab(t);
+  t.addEventListener('input', () => { if (document.getElementById('autoRun').checked){ clearTimeout(labTimer); labTimer = setTimeout(runLab, 700); } });
+});
+document.getElementById('labDownload').onclick = () => {
+  const doc = '<!DOCTYPE html>\n<html lang="es">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Mi página</title>\n<style>\n' + edC.value + '\n</style>\n</head>\n<body>\n' + edH.value + '\n<script>\n' + edJ.value + '\n' + CLOSE + '\n</body>\n</html>';
+  try {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([doc], {type:'text/html'}));
+    a.download = 'mi-pagina.html'; document.body.appendChild(a); a.click(); a.remove();
+  } catch(e){ alert('No fue posible descargar el archivo en este entorno.'); }
+};
+[edH.value, edC.value, edJ.value] = TPL['Tarjeta de presentación'];
+
+/* ---------- Retos ---------- */
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const RETOS = [
+  { t:'html', title:'Mi primer título', desc:'Crea un título principal <h1> con el texto “Hola Mundo” y debajo un párrafo <p> que te presente.',
+    h:'<!-- Escribe tu código aquí -->\n', c:'', j:'',
+    hint:'Las etiquetas se abren y se cierran: <h1>...</h1> y <p>...</p>.',
+    sol:['<h1>Hola Mundo</h1>\n<p>Soy aprendiz de desarrollo web.</p>','',''],
+    check: async d => { const h = d.querySelector('h1'); if(!h) return 'Falta la etiqueta <h1>.'; if(!/hola\s*mundo/i.test(h.textContent)) return 'El <h1> debe decir “Hola Mundo”.'; if(!d.querySelector('p') || !d.querySelector('p').textContent.trim()) return 'Agrega un párrafo <p> con texto.'; return true; } },
+  { t:'html', title:'Lista de lenguajes', desc:'Crea una lista sin orden <ul> con al menos tres elementos <li>: HTML, CSS y JavaScript.',
+    h:'<h2>Lenguajes de la web</h2>\n', c:'', j:'',
+    hint:'Dentro de <ul> va cada elemento en su propio <li>.',
+    sol:['<h2>Lenguajes de la web</h2>\n<ul>\n  <li>HTML</li>\n  <li>CSS</li>\n  <li>JavaScript</li>\n</ul>','',''],
+    check: async d => { const u = d.querySelector('ul'); if(!u) return 'Falta la etiqueta <ul>.'; const n = u.querySelectorAll('li').length; if(n < 3) return 'La lista tiene ' + n + ' elementos; necesita al menos 3.'; return true; } },
+  { t:'html', title:'Enlace e imagen accesible', desc:'Agrega un enlace <a> que lleve a https://developer.mozilla.org y una imagen <img> con su atributo alt descriptivo.',
+    h:'<h2>Recursos</h2>\n', c:'', j:'',
+    hint:'El destino del enlace va en href. Para la imagen puedes usar src="https://placehold.co/200x100" y alt="Descripción".',
+    sol:['<h2>Recursos</h2>\n<a href="https://developer.mozilla.org">Documentación MDN</a>\n<br>\n<img src="https://placehold.co/200x100" alt="Imagen de ejemplo">','',''],
+    check: async d => { const a = d.querySelector('a[href]'); if(!a) return 'Falta un <a> con atributo href.'; if(!/developer\.mozilla\.org/.test(a.getAttribute('href'))) return 'El href debe apuntar a https://developer.mozilla.org.'; const i = d.querySelector('img'); if(!i) return 'Falta la etiqueta <img>.'; if(!i.getAttribute('alt') || !i.getAttribute('alt').trim()) return 'La imagen necesita un alt con texto.'; return true; } },
+  { t:'css', title:'Colores con CSS', desc:'Con CSS, cambia el color de fondo del body (que no sea blanco) y el color del texto del h1 (que no sea negro).',
+    h:'<h1>Bienvenidos</h1>\n<p>Esta página tendrá estilo.</p>', c:'/* Escribe tus reglas aquí */\n', j:'',
+    hint:'Usa body { background-color: ... } y h1 { color: ... }.',
+    sol:['<h1>Bienvenidos</h1>\n<p>Esta página tendrá estilo.</p>','body {\n  background-color: #EAF2FB;\n}\nh1 {\n  color: #1468A8;\n}',''],
+    check: async (d,w) => { const bg = w.getComputedStyle(d.body).backgroundColor; if(['rgb(255, 255, 255)','rgba(0, 0, 0, 0)','transparent'].includes(bg)) return 'El fondo del body sigue siendo blanco o transparente.'; const h = d.querySelector('h1'); if(!h) return 'No borres el <h1>.'; const c = w.getComputedStyle(h).color; if(c === 'rgb(17, 17, 17)' || c === 'rgb(0, 0, 0)') return 'El h1 sigue en color negro.'; return true; } },
+  { t:'css', title:'Tarjeta con clase', desc:'Crea la clase .tarjeta con padding de al menos 15px, bordes redondeados (border-radius mayor que 0) y un borde visible.',
+    h:'<div class="tarjeta">\n  <h3>Curso de HTML</h3>\n  <p>Duración: 40 horas</p>\n</div>', c:'', j:'',
+    hint:'Selector de clase con punto: .tarjeta { padding: 20px; border: 2px solid #1468A8; border-radius: 12px; }',
+    sol:['<div class="tarjeta">\n  <h3>Curso de HTML</h3>\n  <p>Duración: 40 horas</p>\n</div>','.tarjeta {\n  padding: 20px;\n  border: 2px solid #1468A8;\n  border-radius: 12px;\n  max-width: 280px;\n}',''],
+    check: async (d,w) => { const t = d.querySelector('.tarjeta'); if(!t) return 'No encuentro el elemento con clase tarjeta.'; const s = w.getComputedStyle(t); if(parseFloat(s.paddingTop) < 15) return 'El padding debe ser de al menos 15px.'; if(parseFloat(s.borderTopLeftRadius) <= 0) return 'Falta border-radius.'; if(parseFloat(s.borderTopWidth) <= 0 || s.borderTopStyle === 'none') return 'Agrega un borde visible (border).'; return true; } },
+  { t:'js', title:'Botón que saluda', desc:'Programa el botón con id “saludar” para que, al hacer clic, el párrafo con id “mensaje” muestre un saludo.',
+    h:'<button id="saludar">Saludar</button>\n<p id="mensaje"></p>', c:'', j:'// 1. Busca el botón\n// 2. Escucha el clic\n// 3. Cambia el texto del párrafo\n',
+    hint:'document.getElementById("saludar").addEventListener("click", () => { ... }); y dentro cambia .textContent del párrafo.',
+    sol:['<button id="saludar">Saludar</button>\n<p id="mensaje"></p>','','document.getElementById("saludar").addEventListener("click", () => {\n  document.getElementById("mensaje").textContent = "¡Hola, bienvenidos a la clase!";\n});'],
+    check: async d => { const b = d.getElementById('saludar'), m = d.getElementById('mensaje'); if(!b || !m) return 'No borres el botón ni el párrafo con sus id.'; const antes = m.textContent; b.click(); await wait(80); if(m.textContent.trim() === '' || m.textContent === antes) return 'Al hacer clic, el párrafo no cambió.'; return true; } },
+  { t:'js', title:'Función sumar', desc:'Escribe una función llamada sumar que reciba dos números y devuelva (return) su suma. Usa console.log para probarla.',
+    h:'<p>Revisa la consola del navegador.</p>', c:'', j:'function sumar(a, b) {\n  // tu código\n}\n',
+    hint:'Dentro de la función escribe: return a + b;',
+    sol:['<p>Revisa la consola del navegador.</p>','','function sumar(a, b) {\n  return a + b;\n}\nconsole.log(sumar(2, 3));'],
+    check: async (d,w) => { if(typeof w.sumar !== 'function') return 'No existe una función llamada sumar.'; if(w.sumar(2,3) !== 5 || w.sumar(-4,10) !== 6) return 'sumar(2, 3) debería devolver 5.'; return true; } },
+  { t:'js', title:'Reto integrador: contador', desc:'Crea un botón con id “mas” y un span con id “contador” que inicie en 0. Cada clic debe aumentar el número en 1. Dale estilo con CSS.',
+    h:'', c:'', j:'',
+    hint:'Guarda el valor en una variable let, súmale 1 en el evento click y asígnalo a .textContent del span.',
+    sol:['<h2>Contador</h2>\n<span id="contador">0</span>\n<button id="mas">+1</button>','#contador {\n  font-size: 40px;\n  color: #1468A8;\n  margin-right: 12px;\n}\nbutton { font-size: 20px; padding: 6px 16px; }','let valor = 0;\ndocument.getElementById("mas").addEventListener("click", () => {\n  valor++;\n  document.getElementById("contador").textContent = valor;\n});'],
+    check: async (d,w) => { const b = d.getElementById('mas'), s = d.getElementById('contador'); if(!b) return 'Falta el botón con id “mas”.'; if(!s) return 'Falta el span con id “contador”.'; if(s.textContent.trim() !== '0') return 'El contador debe iniciar en 0.'; b.click(); b.click(); b.click(); await wait(80); if(s.textContent.trim() !== '3') return 'Tras tres clics el contador muestra “' + s.textContent.trim() + '” en lugar de 3.'; if(rC.value.replace(/\/\*[\s\S]*?\*\//g,'').trim().length < 10) return 'Funciona, pero falta agregar estilo con CSS.'; return true; } }
+];
+const retoFrame = document.getElementById('retoFrame');
+const rH = document.getElementById('rH'), rC = document.getElementById('rC'), rJ = document.getElementById('rJ');
+const done = new Set();
+let cur = 0, retoStarted = false;
+[rH, rC, rJ].forEach(enableTab);
+const TAGNAMES = {html:['HTML','t-html'], css:['CSS','t-css'], js:['JavaScript','t-js']};
+function renderList(){
+  const L = document.getElementById('retoList'); L.innerHTML = '';
+  RETOS.forEach((r,i) => {
+    const b = document.createElement('button');
+    b.className = 'reto-item' + (done.has(i) ? ' done' : '');
+    if (i === cur) b.setAttribute('aria-current','true');
+    b.innerHTML = '<span class="n">' + (done.has(i) ? '✓' : i + 1) + '</span><span><b>' + r.title + '</b><br><small style="color:var(--muted)">' + TAGNAMES[r.t][0] + '</small></span>';
+    b.onclick = () => loadReto(i);
+    L.appendChild(b);
+  });
+  document.getElementById('progBar').style.width = (done.size / RETOS.length * 100) + '%';
+  document.getElementById('progTxt').textContent = done.size + ' de ' + RETOS.length + ' retos superados';
+}
+function runReto(){
+  return new Promise(res => {
+    retoFrame.onload = () => res();
+    retoFrame.srcdoc = buildDoc(rH.value, rC.value, rJ.value);
+  });
+}
+function loadReto(i){
+  cur = i; const r = RETOS[i];
+  document.getElementById('retoTag').className = 'tag ' + TAGNAMES[r.t][1];
+  document.getElementById('retoTag').textContent = 'Reto ' + (i + 1) + ' · ' + TAGNAMES[r.t][0];
+  document.getElementById('retoTitle').textContent = r.title;
+  document.getElementById('retoDesc').textContent = r.desc;
+  rH.value = r.h; rC.value = r.c; rJ.value = r.j;
+  document.getElementById('retoFb').className = 'feedback';
+  const hb = document.getElementById('retoHintBox'); hb.style.display = 'none'; hb.textContent = '';
+  renderList(); runReto();
+}
+document.getElementById('retoRun').onclick = runReto;
+document.getElementById('retoReset').onclick = () => loadReto(cur);
+document.getElementById('retoHint').onclick = () => { const hb = document.getElementById('retoHintBox'); hb.textContent = 'Pista: ' + RETOS[cur].hint; hb.style.display = 'block'; };
+document.getElementById('retoSol').onclick = () => { [rH.value, rC.value, rJ.value] = RETOS[cur].sol; runReto(); };
+document.getElementById('retoCheck').onclick = async () => {
+  const fb = document.getElementById('retoFb');
+  await runReto();
+  let res;
+  try { res = await RETOS[cur].check(retoFrame.contentDocument, retoFrame.contentWindow); }
+  catch(e){ res = 'Tu código produjo un error: ' + e.message; }
+  if (res === true){
+    done.add(cur);
+    fb.className = 'feedback ok';
+    fb.textContent = cur < RETOS.length - 1 ? '¡Correcto! Reto superado. Continúa con el siguiente.' : '¡Correcto! Completaste el reto integrador.';
+    renderList();
+  } else {
+    fb.className = 'feedback bad';
+    fb.textContent = 'Aún no: ' + res;
+  }
+};
+
+/* ---------- Quiz ---------- */
+const QUIZ = [
+  ['¿Qué función cumple HTML en una página web?',['Define el comportamiento','Define la estructura y el contenido','Define los colores y fuentes','Gestiona la base de datos'],1,'HTML marca el contenido: títulos, párrafos, imágenes, enlaces.'],
+  ['¿Cuál es la etiqueta correcta para un enlace?',['<link>','<href>','<a>','<url>'],2,'<a> crea enlaces; el destino se indica en el atributo href.'],
+  ['¿Para qué sirve el atributo alt en una imagen?',['Cambiar su tamaño','Describirla para lectores de pantalla y si no carga','Agregar un borde','Alinearla'],1,'alt es clave para la accesibilidad.'],
+  ['En CSS, ¿qué selector apunta a los elementos con class="menu"?',['#menu','menu','.menu','*menu'],2,'El punto selecciona clases; la almohadilla (#) selecciona id.'],
+  ['En el modelo de caja, ¿qué propiedad es el espacio interno entre el contenido y el borde?',['margin','padding','border','gap'],1,'padding es el relleno interno; margin es el espacio externo.'],
+  ['¿Qué hace display: flex en un contenedor?',['Oculta los elementos','Ordena sus hijos en fila o columna con control de alineación','Anima los elementos','Cambia la fuente'],1,'Flexbox facilita distribuir y alinear elementos.'],
+  ['¿Cuál declaración en JavaScript crea un valor que no se puede reasignar?',['let','var','const','fixed'],2,'const impide reasignar la variable.'],
+  ['¿Qué es el DOM?',['Un lenguaje nuevo','La representación en árbol de la página que JavaScript puede modificar','Un servidor web','Un tipo de archivo CSS'],1,'El DOM permite a JavaScript leer y cambiar la página.']
+];
+function renderQuiz(){
+  const box = document.getElementById('quizBox'); box.innerHTML = '';
+  QUIZ.forEach((q,i) => {
+    const d = document.createElement('div'); d.className = 'q';
+    d.innerHTML = '<fieldset><legend>' + (i + 1) + '. ' + esc(q[0]) + '</legend>' +
+      q[1].map((o,k) => '<label><input type="radio" name="q' + i + '" value="' + k + '"> ' + esc(o) + '</label>').join('') +
+      '<p class="why">' + esc(q[3]) + '</p></fieldset>';
+    box.appendChild(d);
+  });
+  document.getElementById('quizScore').textContent = '';
+}
+document.getElementById('quizCheck').onclick = () => {
+  let ok = 0;
+  QUIZ.forEach((q,i) => {
+    document.querySelectorAll('input[name=q' + i + ']').forEach(inp => {
+      const lab = inp.parentElement; lab.classList.remove('right','wrong');
+      if (+inp.value === q[2]) lab.classList.add('right');
+      else if (inp.checked) lab.classList.add('wrong');
+    });
+    const sel = document.querySelector('input[name=q' + i + ']:checked');
+    if (sel && +sel.value === q[2]) ok++;
+    document.querySelectorAll('.q .why')[i].style.display = 'block';
+  });
+  document.getElementById('quizScore').textContent = ok + ' / ' + QUIZ.length + (ok === QUIZ.length ? ' · ¡Excelente!' : ok >= 6 ? ' · Muy bien' : ' · Repasemos');
+};
+document.getElementById('quizReset').onclick = renderQuiz;
+renderQuiz();
+
+route();
+</script>
+</body>
+</html>
